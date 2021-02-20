@@ -5,16 +5,11 @@
 
 package main
 
-import (
-	"encoding/hex"
-	"fmt"
-)
+import "fmt"
 
 func main() {
-	a := "73616d706c65"
-	bs, err := hex.DecodeString(a)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(bs))
+	message := "Hello"
+	byteMessage := []byte(message)
+
+	fmt.Println(byteMessage)
 }
