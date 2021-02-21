@@ -6,40 +6,60 @@
 
 package main
 
+import (
+	"encoding/csv"
+	"fmt"
+	"os"
+)
+
 var rounds uint = 10
+var sBoxFilename string = "./sbox.csv"
+var sBox [][]string = getCsvContent(sBoxFilename)
 
 func main() {
-	var message byte
+	// var message byte
 
-	message = 0x42
+	// message = 0x42
 
-	message = AES(message)
+	// message = AES(message)
+
+	fmt.Println(sBox[0][0])
+}
+
+func getCsvContent(filename string) [][]string {
+	recordFile, err := os.Open(sBoxFilename)
+	if err != nil {
+		fmt.Println("An error encountered ::", err)
+	}
+	reader := csv.NewReader(recordFile)
+	result, _ := reader.ReadAll()
+	return result
 }
 
 // AES is a function
-func AES(message byte) byte {
-	var result byte // the 's'
-	var originalKey byte
-	var keys []byte
-	var index uint
+// func AES(message byte) byte {
+// 	var result byte // the 's'
+// 	var originalKey byte
+// 	var keys []byte
+// 	var index uint
 
-	// Expand
-	keys = expand(originalKey)
+// 	// Expand
+// 	keys = expand(originalKey)
 
-	// S
-	result = message
+// 	// S
+// 	result = message
 
-	index = 0
-	for index < rounds {
-		// Shift rows
+// 	index = 0
+// 	for index < rounds {
+// 		// Shift rows
 
-		// mix columns
+// 		// mix columns
 
-		index++
-	}
+// 		index++
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
 func expand(inputString byte) []byte {
 	var result []byte
