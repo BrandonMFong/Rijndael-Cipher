@@ -86,7 +86,12 @@ func expand(inputString []byte) []byte {
 func sMap(block []byte) []byte {
 	var result []byte
 	var tempByte byte
+	var xCoor uint
+	var yCoor uint
+	var sMapResult string
 
+	xCoor = 0
+	yCoor = 0
 	for _, blockByte := range block {
 		fmt.Printf("%x: ", blockByte)
 
@@ -95,9 +100,19 @@ func sMap(block []byte) []byte {
 		tempByte = tempByte >> 4
 		fmt.Printf("%x & ", tempByte)
 
+		// Get the x coordinate (the left most)
+		xCoor = uint(tempByte)
+
 		// Right most 8 bits
 		tempByte = blockByte & 0x0F
 		fmt.Printf("%x", tempByte)
+
+		// Get the y coordinate (the right most)
+		yCoor = uint(tempByte)
+
+		sMapResult = sBox[int(xCoor)][int(yCoor)]
+
+		fmt.Print(" => ", sMapResult)
 
 		fmt.Println()
 	}
