@@ -12,18 +12,20 @@ import (
 	"os"
 )
 
+const bitLength uint = 128
+const blockByteSize uint = bitLength / 8
+
 var rounds uint = 10
 var sBoxFilename string = "./sbox.csv"
 var sBox [][]string = getCsvContent(sBoxFilename)
 
 func main() {
-	// var message byte
+	var message string = "BrandonMFongName"
+	byteMessage := []byte(message)
 
-	// message = 0x42
+	fmt.Println(len(byteMessage))
 
-	// message = AES(message)
-
-	fmt.Println(sBox[0][0])
+	message = AES(byteMessage)
 }
 
 func getCsvContent(filename string) [][]string {
@@ -37,29 +39,31 @@ func getCsvContent(filename string) [][]string {
 }
 
 // AES is a function
-// func AES(message byte) byte {
-// 	var result byte // the 's'
-// 	var originalKey byte
-// 	var keys []byte
-// 	var index uint
+func AES(message []byte) []byte {
+	var result []byte // the 's'
+	var originalKey byte
+	var keys []byte
+	var index uint
 
-// 	// Expand
-// 	keys = expand(originalKey)
+	if len(message) == int(blockByteSize) {
+		// Expand
+		keys = expand(originalKey)
 
-// 	// S
-// 	result = message
+		// S
+		result = message
 
-// 	index = 0
-// 	for index < rounds {
-// 		// Shift rows
+		index = 0
+		for index < rounds {
+			// Shift rows
 
-// 		// mix columns
+			// mix columns
 
-// 		index++
-// 	}
+			index++
+		}
+	}
 
-// 	return result
-// }
+	return result
+}
 
 func expand(inputString byte) []byte {
 	var result []byte
