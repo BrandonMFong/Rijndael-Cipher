@@ -23,9 +23,9 @@ func main() {
 	var message string = "BrandonMFongName"
 	byteMessage := []byte(message)
 
-	fmt.Println(len(byteMessage))
+	fmt.Println("Message: ", byteMessage)
 
-	message = AES(byteMessage)
+	byteMessage = AES(byteMessage)
 }
 
 func getCsvContent(filename string) [][]string {
@@ -40,33 +40,69 @@ func getCsvContent(filename string) [][]string {
 
 // AES is a function
 func AES(message []byte) []byte {
-	var result []byte // the 's'
-	var originalKey byte
-	var keys []byte
+	var state []byte // the 's'
+	var result []byte
+	// var originalKey []byte
+	// var keys []byte
 	var index uint
 
+	// Want to make sure that this message is 16 bytes long,
+	// else just return the orignal message
 	if len(message) == int(blockByteSize) {
 		// Expand
-		keys = expand(originalKey)
+		// keys = expand(originalKey)
 
 		// S
-		result = message
+		state = message
 
 		index = 0
 		for index < rounds {
+			// S Map
+			state = sMap(state)
+
 			// Shift rows
 
 			// mix columns
 
 			index++
 		}
+	} else {
+		fmt.Println("Message must be 16 bytes long, no more, no less. ")
 	}
+
+	result = state
 
 	return result
 }
 
-func expand(inputString byte) []byte {
+func expand(inputString []byte) []byte {
 	var result []byte
+
+	result = inputString
+
+	return result
+}
+
+func sMap(block []byte) []byte {
+	var result []byte
+	var tempByte byte
+
+	for _, blockByte := range block {
+		fmt.Printf("%x: ", blockByte)
+
+		// Left most 8 bits
+		tempByte = blockByte & 0xF0
+		tempByte = tempByte >> 4
+		fmt.Printf("%x & ", tempByte)
+
+		// Right most 8 bits
+		tempByte = blockByte & 0x0F
+		fmt.Printf("%x", tempByte)
+
+		fmt.Println()
+	}
+
+	result = block
 
 	return result
 }
