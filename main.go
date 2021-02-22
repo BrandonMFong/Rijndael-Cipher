@@ -84,7 +84,7 @@ func AES(message []byte) []byte {
 		round = 0
 		for round < maxRounds {
 			// S Map
-			state = sMap(state)
+			sMap(&state)
 			fmt.Println("S map round", round, ":\t", state)
 
 			// Shift rows
@@ -109,8 +109,7 @@ func expand(inputString []byte) []byte {
 	return result
 }
 
-func sMap(block [blockByteSize][blockByteSize]byte) [blockByteSize][blockByteSize]byte {
-	var result [blockByteSize][blockByteSize]byte
+func sMap(block *[blockByteSize][blockByteSize]byte) {
 	var tempByte byte
 	var xCoor uint
 	var yCoor uint
@@ -144,10 +143,6 @@ func sMap(block [blockByteSize][blockByteSize]byte) [blockByteSize][blockByteSiz
 			block[rowIndex][columnIndex] = tempByte
 		}
 	}
-
-	result = block
-
-	return result
 }
 
 func array2block(array []byte) [blockByteSize][blockByteSize]byte {
