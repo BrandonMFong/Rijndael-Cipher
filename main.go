@@ -145,20 +145,22 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 	var tempByteArray []byte
 	var tempSlice [blockByteSize]byte // This is used in the first column
 	var tempByte byte
+	var defaultSlice [blockByteSize]byte = [blockByteSize]byte{0xFF, 0xFF, 0xFF, 0xFF}
 
 	result[0] = inputKey
 	for i := 1; i < int(constantArraySize); i++ {
 
+		// NOT TRANSPOSING, SO IN ANIMATION OUR ROWS ARE THEIR COLUMNS
 		// Get the previous block
 		tempByteArray = result[i-1][:]
 		tempBlockPrev = array2block(tempByteArray)
 		tempSlice = tempBlockPrev[3] // I need this row before we transpose it
-		transpose(&tempBlockPrev)
+		// transpose(&tempBlockPrev)
 
 		// Get the current block
 		tempByteArray = result[i][:]
 		tempBlockCurr = array2block(tempByteArray)
-		transpose(&tempBlockPrev)
+		// transpose(&tempBlockPrev)
 
 		sMapForSlice(&tempSlice) // map sbox
 
@@ -172,31 +174,46 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 		// Recall you transposed the blocks
 		// So you are sweeping the columns
 		// Constants are sweeping the rows
+		//
 		// Column 0
-		tempBlockCurr[0][0] = tempBlockPrev[0][0] ^ tempSlice[0] ^ constants[i][0]
-		tempBlockCurr[1][0] = tempBlockPrev[1][0] ^ tempSlice[0] ^ constants[i][1]
-		tempBlockCurr[2][0] = tempBlockPrev[2][0] ^ tempSlice[0] ^ constants[i][2]
-		tempBlockCurr[3][0] = tempBlockPrev[3][0] ^ tempSlice[0] ^ constants[i][3]
+		// tempBlockCurr[0][0] = tempBlockPrev[0][0] ^ tempSlice[0] ^ constants[i][0]
+		// tempBlockCurr[1][0] = tempBlockPrev[1][0] ^ tempSlice[0] ^ constants[i][1]
+		// tempBlockCurr[2][0] = tempBlockPrev[2][0] ^ tempSlice[0] ^ constants[i][2]
+		// tempBlockCurr[3][0] = tempBlockPrev[3][0] ^ tempSlice[0] ^ constants[i][3]
+		tempBlockCurr[0] = xorSlices(tempBlockPrev[0], tempSlice, constants[i])
 
 		// Column 1
-		tempBlockCurr[0][1] = tempBlockPrev[0][1] ^ tempBlockCurr[0][0]
-		tempBlockCurr[1][1] = tempBlockPrev[1][1] ^ tempBlockCurr[1][0]
-		tempBlockCurr[2][1] = tempBlockPrev[2][1] ^ tempBlockCurr[2][0]
-		tempBlockCurr[3][1] = tempBlockPrev[3][1] ^ tempBlockCurr[3][0]
+		// tempBlockCurr[0][1] = tempBlockPrev[0][1] ^ tempBlockCurr[0][0]
+		// tempBlockCurr[1][1] = tempBlockPrev[1][1] ^ tempBlockCurr[1][0]
+		// tempBlockCurr[2][1] = tempBlockPrev[2][1] ^ tempBlockCurr[2][0]
+		// tempBlockCurr[3][1] = tempBlockPrev[3][1] ^ tempBlockCurr[3][0]
+		tempBlockCurr[1] = xorSlices(tempBlockPrev[1], tempBlockCurr[0], defaultSlice)
 
 		// Column 2
-		tempBlockCurr[0][2] = tempBlockPrev[0][2] ^ tempBlockCurr[0][1]
-		tempBlockCurr[1][2] = tempBlockPrev[1][2] ^ tempBlockCurr[1][1]
-		tempBlockCurr[2][2] = tempBlockPrev[2][2] ^ tempBlockCurr[2][1]
-		tempBlockCurr[3][2] = tempBlockPrev[3][2] ^ tempBlockCurr[3][1]
+		// tempBlockCurr[0][2] = tempBlockPrev[0][2] ^ tempBlockCurr[0][1]
+		// tempBlockCurr[1][2] = tempBlockPrev[1][2] ^ tempBlockCurr[1][1]
+		// tempBlockCurr[2][2] = tempBlockPrev[2][2] ^ tempBlockCurr[2][1]
+		// tempBlockCurr[3][2] = tempBlockPrev[3][2] ^ tempBlockCurr[3][1]
+		tempBlockCurr[2] = xorSlices(tempBlockPrev[2], tempBlockCurr[1], defaultSlice)
 
 		// Column 3
-		tempBlockCurr[0][3] = tempBlockPrev[0][3] ^ tempBlockCurr[0][2]
-		tempBlockCurr[1][3] = tempBlockPrev[1][3] ^ tempBlockCurr[1][2]
-		tempBlockCurr[2][3] = tempBlockPrev[2][3] ^ tempBlockCurr[2][2]
-		tempBlockCurr[3][3] = tempBlockPrev[3][3] ^ tempBlockCurr[3][2]
+		// tempBlockCurr[0][3] = tempBlockPrev[0][3] ^ tempBlockCurr[0][2]
+		// tempBlockCurr[1][3] = tempBlockPrev[1][3] ^ tempBlockCurr[1][2]
+		// tempBlockCurr[2][3] = tempBlockPrev[2][3] ^ tempBlockCurr[2][2]
+		// tempBlockCurr[3][3] = tempBlockPrev[3][3] ^ tempBlockCurr[3][2]
+		tempBlockCurr[3] = xorSlices(tempBlockPrev[3], tempBlockCurr[2], defaultSlice)
 	}
 
+	return result
+}
+
+// Will not rely on transpose.  I don't think I need to transpose above
+func xorSlices(x [constantLength]byte, y [constantLength]byte, z [constantLength]byte) [constantLength]byte {
+	var result [constantLength]byte
+
+	for i := 0; i < int(constantLength); i++ {
+		result[i] = x[i] ^ y[i] ^ z[i]
+	}
 	return result
 }
 
