@@ -119,7 +119,7 @@ func AES(message []byte, key []byte) []byte {
 			fmt.Println("\nROUND", round)
 
 			// S Map
-			sMap(&state)
+			sMapForBlock(&state)
 			fmt.Println("S map:")
 			printBlock(state)
 
@@ -154,7 +154,6 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 	var tempBlockCurr [blockByteSize][blockByteSize]byte // to use for results
 	var tempByteArray []byte
 	var tempSlice [blockByteSize]byte // This is used in the first column
-	var tempByte byte
 	var defaultSlice [blockByteSize]byte = [blockByteSize]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	var x [blockByteSize]byte = [blockByteSize]byte{0x00, 0x00, 0x00, 0x00}
 	var y [blockByteSize]byte = [blockByteSize]byte{0x00, 0x00, 0x00, 0x00}
@@ -178,11 +177,9 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 		sMapForSlice(&tempSlice) // map sbox
 
 		// shift cells for the slice
-		tempByte = tempSlice[0]
-		tempSlice[0] = tempSlice[1]
-		tempSlice[1] = tempSlice[2]
-		tempSlice[2] = tempSlice[3]
-		tempSlice[3] = tempByte
+		for j := 0; j < int(blockByteSize); j++ {
+			tempSlice[j] = tempBlockPrev[3][(j+1)%4]
+		}
 
 		// Recall you transposed the blocks
 		// So you are sweeping the columns
@@ -251,7 +248,7 @@ func sMapForSlice(slice *[blockByteSize]byte) {
 	}
 }
 
-func sMap(block *[blockByteSize][blockByteSize]byte) {
+func sMapForBlock(block *[blockByteSize][blockByteSize]byte) {
 	var tempByte byte
 	var xCoor uint
 	var yCoor uint
