@@ -14,6 +14,8 @@ const bitLength uint = 128
 const boxByteSize uint = bitLength / 8
 const messageLength uint = boxByteSize
 const blockByteSize uint = boxByteSize / 4
+const shiftTheRows uint = 0
+const shiftTheColumns uint = 1
 
 var sBox = [boxByteSize][boxByteSize]byte{
 	{0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76},
@@ -66,6 +68,8 @@ func AES(message []byte) []byte {
 	// var keys []byte
 	var round uint
 
+	fmt.Println("\n** WARNING: The blocks are printed left to right, then top to bottom **\n ")
+
 	if len(message) != int(messageLength) {
 		fmt.Println("Message must be 16 bytes long, no more, no less. ")
 		okayToContinue = false
@@ -79,20 +83,30 @@ func AES(message []byte) []byte {
 
 		// S
 		state = array2block(message)
-		fmt.Println("Block: ", state)
+		fmt.Println("Block:")
+		printBlock(state)
+		fmt.Println()
 
 		round = 0
 		for round < maxRounds {
-			fmt.Println("Round", round)
+			fmt.Println("ROUND", round)
 			// S Map
 			sMap(&state)
-			fmt.Println("S map:", state)
+			// fmt.Println("S map:", state)
+			fmt.Println("S map:")
+			printBlock(state)
 
 			// Shift rows
 			shiftRows(&state)
-			fmt.Println("Shift rows:", state)
+			// fmt.Println("Shift rows:", state)
+			fmt.Println("Shift rows:")
+			printBlock(state)
 
 			// mix columns
+			shiftColumns(&state)
+			// fmt.Println("Shift columns:", state)
+			fmt.Println("Shift columns:")
+			printBlock(state)
 
 			round++
 			break
@@ -203,7 +217,29 @@ func transpose(block *[blockByteSize][blockByteSize]byte) {
 }
 
 func shiftRows(block *[blockByteSize][blockByteSize]byte) {
-	transpose(block)
+	// transpose(block)
+
+	// for index, row := range *block {
+	// 	if index != 0 {
+	// 		block[index][0] = row[(0+index)%4]
+	// 		block[index][1] = row[(1+index)%4]
+	// 		block[index][2] = row[(2+index)%4]
+	// 		block[index][3] = row[(3+index)%4]
+	// 	}
+	// }
+
+	// transpose(block) // reverse the transpose
+	shiftBlock(shiftTheRows, block)
+}
+
+func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
+	shiftBlock(shiftTheColumns, block)
+}
+
+func shiftBlock(typeShift uint, block *[blockByteSize][blockByteSize]byte) {
+	if typeShift == shiftTheRows {
+		transpose(block)
+	}
 
 	for index, row := range *block {
 		if index != 0 {
@@ -214,5 +250,14 @@ func shiftRows(block *[blockByteSize][blockByteSize]byte) {
 		}
 	}
 
-	transpose(block) // reverse the transpose
+	// reverse the transpose
+	if typeShift == shiftTheRows {
+		transpose(block)
+	}
+}
+
+func printBlock(block [blockByteSize][blockByteSize]byte) {
+	for _, row := range block {
+		fmt.Println(row)
+	}
 }
