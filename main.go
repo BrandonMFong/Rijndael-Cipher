@@ -13,9 +13,13 @@ import (
 const bitLength uint = 128
 const boxByteSize uint = bitLength / 8
 const messageLength uint = boxByteSize
+const keyLength uint = boxByteSize
 const blockByteSize uint = boxByteSize / 4
+const constantLength uint = blockByteSize
 const shiftTheRows uint = 0
 const shiftTheColumns uint = 1
+const keyArraySize uint = 11
+const constantArraySize uint = 11
 
 var sBox = [boxByteSize][boxByteSize]byte{
 	{0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76},
@@ -35,11 +39,21 @@ var sBox = [boxByteSize][boxByteSize]byte{
 	{0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf},
 	{0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16}}
 
+var constants = [constantArraySize][constantLength]byte{
+	{0x02, 0x00, 0x00, 0x00},
+	{0x04, 0x00, 0x00, 0x00},
+	{0x08, 0x00, 0x00, 0x00},
+	{0x10, 0x00, 0x00, 0x00},
+	{0x20, 0x00, 0x00, 0x00},
+	{0x40, 0x00, 0x00, 0x00},
+	{0x80, 0x00, 0x00, 0x00},
+	{0x1B, 0x00, 0x00, 0x00},
+	{0x36, 0x00, 0x00, 0x00},
+	{0x6C, 0x00, 0x00, 0x00}}
+
 var maxRounds uint = 10
 
-// var sBoxFilename string = "./sbox.csv"
-// var sBox [][]string = getCsvContent(sBoxFilename)
-
+// No constraints on the variables in main
 func main() {
 	var message string = "BrandonMFongName"
 	var byteMessage = []byte(message)
@@ -52,24 +66,16 @@ func main() {
 	byteMessage = AES(byteMessage, byteKey)
 }
 
-// func getCsvContent(filename string) [][]string {
-// 	recordFile, err := os.Open(sBoxFilename)
-// 	if err != nil {
-// 		fmt.Println("An error encountered ::", err)
-// 	}
-// 	reader := csv.NewReader(recordFile)
-// 	result, _ := reader.ReadAll()
-// 	return result
-// }
-
 // AES is a function
 func AES(message []byte, key []byte) []byte {
 	var okayToContinue bool = true
 	var state [blockByteSize][blockByteSize]byte // the 's'
 	var result []byte
-	// var originalKey []byte
-	// var keys []byte
+	var originalKey [keyLength]byte
+	var keys [keyArraySize][keyLength]byte
 	var round uint
+
+	copy(originalKey[:], key[:int(keyLength)]) // Variable size to fixed size
 
 	fmt.Println("\n** WARNING: The blocks are printed left to right, then top to bottom **\n ")
 
@@ -91,7 +97,8 @@ func AES(message []byte, key []byte) []byte {
 	// else just return the orignal message
 	if okayToContinue {
 		// Expand
-		// keys = expand(originalKey)
+		keys = expand(originalKey)
+		fmt.Println(keys)
 
 		// S
 		state = array2block(message)
@@ -101,26 +108,26 @@ func AES(message []byte, key []byte) []byte {
 		round = 0
 		for round < maxRounds {
 			fmt.Println("\nROUND", round)
+
 			// S Map
 			sMap(&state)
-			// fmt.Println("S map:", state)
 			fmt.Println("S map:")
 			printBlock(state)
 
 			// Shift rows
 			shiftRows(&state)
-			// fmt.Println("Shift rows:", state)
 			fmt.Println("Shift rows:")
 			printBlock(state)
 
 			// mix columns
-			shiftColumns(&state)
-			// fmt.Println("Shift columns:", state)
-			fmt.Println("Shift columns:")
-			printBlock(state)
+			if round < (maxRounds - 1) {
+				shiftColumns(&state)
+				fmt.Println("Shift columns:")
+				printBlock(state)
+			}
 
 			round++
-			// break
+			break
 		}
 	}
 
@@ -130,10 +137,53 @@ func AES(message []byte, key []byte) []byte {
 	return result
 }
 
-func expand(inputString []byte) []byte {
-	var result []byte
+// Keep an eye on your logic
+func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
+	var result [keyArraySize][keyLength]byte
+	var tempBlockPrev [blockByteSize][blockByteSize]byte // for operations
+	var tempBlockCurr [blockByteSize][blockByteSize]byte // to use for results
+	var tempByteArray []byte
 
-	result = inputString
+	result[0] = inputKey
+	for i := 1; i < int(constantArraySize); i++ {
+
+		// Get the previous block
+		tempByteArray = result[i-1][:]
+		tempBlockPrev = array2block(tempByteArray)
+		transpose(&tempBlockPrev)
+
+		// Get the current block
+		tempByteArray = result[i][:]
+		tempBlockCurr = array2block(tempByteArray)
+		transpose(&tempBlockPrev)
+
+		// Recall you transposed the blocks
+		// So you are sweeping the columns
+		// Constants are sweeping the rows
+		// Column 0
+		tempBlockCurr[0][0] = tempBlockPrev[0][0] ^ tempBlockCurr[0][0] ^ constants[i][0]
+		tempBlockCurr[1][0] = tempBlockPrev[1][0] ^ tempBlockCurr[1][0] ^ constants[i][1]
+		tempBlockCurr[2][0] = tempBlockPrev[2][0] ^ tempBlockCurr[2][0] ^ constants[i][2]
+		tempBlockCurr[3][0] = tempBlockPrev[3][0] ^ tempBlockCurr[3][0] ^ constants[i][3]
+
+		// Column 1
+		tempBlockCurr[0][1] = tempBlockPrev[0][1] ^ tempBlockCurr[0][0]
+		tempBlockCurr[1][1] = tempBlockPrev[1][1] ^ tempBlockCurr[1][0]
+		tempBlockCurr[2][1] = tempBlockPrev[2][1] ^ tempBlockCurr[2][0]
+		tempBlockCurr[3][1] = tempBlockPrev[3][1] ^ tempBlockCurr[3][0]
+
+		// Column 2
+		tempBlockCurr[0][2] = tempBlockPrev[0][2] ^ tempBlockCurr[0][1]
+		tempBlockCurr[1][2] = tempBlockPrev[1][2] ^ tempBlockCurr[1][1]
+		tempBlockCurr[2][2] = tempBlockPrev[2][2] ^ tempBlockCurr[2][1]
+		tempBlockCurr[3][2] = tempBlockPrev[3][2] ^ tempBlockCurr[3][1]
+
+		// Column 3
+		tempBlockCurr[0][3] = tempBlockPrev[0][3] ^ tempBlockCurr[0][2]
+		tempBlockCurr[1][3] = tempBlockPrev[1][3] ^ tempBlockCurr[1][2]
+		tempBlockCurr[2][3] = tempBlockPrev[2][3] ^ tempBlockCurr[2][2]
+		tempBlockCurr[3][3] = tempBlockPrev[3][3] ^ tempBlockCurr[3][2]
+	}
 
 	return result
 }
