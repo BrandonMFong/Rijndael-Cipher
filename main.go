@@ -79,7 +79,7 @@ func AES(message []byte) []byte {
 
 		// S
 		state = array2block(message)
-		fmt.Println(state)
+		fmt.Println("Block: ", state)
 
 		round = 0
 		for round < maxRounds {
@@ -88,6 +88,8 @@ func AES(message []byte) []byte {
 			fmt.Println("S map round", round, ":\t", state)
 
 			// Shift rows
+			transpose(&state)
+			fmt.Println("Transpose: ", state)
 
 			// mix columns
 
@@ -186,4 +188,15 @@ func block2array(block [blockByteSize][blockByteSize]byte) []byte {
 	}
 
 	return result
+}
+
+func transpose(block *[blockByteSize][blockByteSize]byte) {
+	var tempBlock [blockByteSize][blockByteSize]byte
+
+	for rowIndex, row := range block {
+		for columnIndex, cell := range row {
+			tempBlock[columnIndex][rowIndex] = cell
+		}
+	}
+	*block = tempBlock
 }
