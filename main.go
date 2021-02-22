@@ -143,6 +143,8 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 	var tempBlockPrev [blockByteSize][blockByteSize]byte // for operations
 	var tempBlockCurr [blockByteSize][blockByteSize]byte // to use for results
 	var tempByteArray []byte
+	var tempSlice [blockByteSize]byte // This is used in the first column
+	var tempByte byte
 
 	result[0] = inputKey
 	for i := 1; i < int(constantArraySize); i++ {
@@ -150,6 +152,7 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 		// Get the previous block
 		tempByteArray = result[i-1][:]
 		tempBlockPrev = array2block(tempByteArray)
+		tempSlice = tempBlockPrev[3] // I need this row before we transpose it
 		transpose(&tempBlockPrev)
 
 		// Get the current block
@@ -157,14 +160,23 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 		tempBlockCurr = array2block(tempByteArray)
 		transpose(&tempBlockPrev)
 
+		sMapForSlice(&tempSlice) // map sbox
+
+		// shift cells for the slice
+		tempByte = tempSlice[0]
+		tempSlice[0] = tempSlice[1]
+		tempSlice[1] = tempSlice[2]
+		tempSlice[2] = tempSlice[3]
+		tempSlice[3] = tempByte
+
 		// Recall you transposed the blocks
 		// So you are sweeping the columns
 		// Constants are sweeping the rows
 		// Column 0
-		tempBlockCurr[0][0] = tempBlockPrev[0][0] ^ tempBlockCurr[0][0] ^ constants[i][0]
-		tempBlockCurr[1][0] = tempBlockPrev[1][0] ^ tempBlockCurr[1][0] ^ constants[i][1]
-		tempBlockCurr[2][0] = tempBlockPrev[2][0] ^ tempBlockCurr[2][0] ^ constants[i][2]
-		tempBlockCurr[3][0] = tempBlockPrev[3][0] ^ tempBlockCurr[3][0] ^ constants[i][3]
+		tempBlockCurr[0][0] = tempBlockPrev[0][0] ^ tempSlice[0] ^ constants[i][0]
+		tempBlockCurr[1][0] = tempBlockPrev[1][0] ^ tempSlice[0] ^ constants[i][1]
+		tempBlockCurr[2][0] = tempBlockPrev[2][0] ^ tempSlice[0] ^ constants[i][2]
+		tempBlockCurr[3][0] = tempBlockPrev[3][0] ^ tempSlice[0] ^ constants[i][3]
 
 		// Column 1
 		tempBlockCurr[0][1] = tempBlockPrev[0][1] ^ tempBlockCurr[0][0]
@@ -186,6 +198,40 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 	}
 
 	return result
+}
+
+func sMapForSlice(slice *[blockByteSize]byte) {
+	var tempByte byte
+	var xCoor uint
+	var yCoor uint
+
+	xCoor = 0
+	yCoor = 0
+	for index, sliceByte := range slice {
+		// fmt.Printf("%x: ", blockByte)
+
+		// Left most 8 bits
+		tempByte = sliceByte & 0xF0
+		tempByte = tempByte >> 4
+		// fmt.Printf("%x & ", tempByte)
+
+		// Get the x coordinate (the left most)
+		xCoor = uint(tempByte)
+
+		// Right most 8 bits
+		tempByte = sliceByte & 0x0F
+		// fmt.Printf("%x", tempByte)
+
+		// Get the y coordinate (the right most)
+		yCoor = uint(tempByte)
+
+		tempByte = sBox[int(xCoor)][int(yCoor)]
+
+		// fmt.Printf(" => %x", tempByte)
+		// fmt.Println()
+
+		slice[index] = tempByte
+	}
 }
 
 func sMap(block *[blockByteSize][blockByteSize]byte) {
