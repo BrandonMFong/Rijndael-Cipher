@@ -11,9 +11,11 @@ import (
 )
 
 const bitLength uint = 128
-const blockByteSize uint = bitLength / 8
+const boxByteSize uint = bitLength / 8
+const messageLength uint = boxByteSize
+const blockByteSize uint = boxByteSize / 4
 
-var sBox = [blockByteSize][blockByteSize]byte{
+var sBox = [boxByteSize][boxByteSize]byte{
 	{0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76},
 	{0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0},
 	{0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15},
@@ -57,20 +59,27 @@ func main() {
 
 // AES is a function
 func AES(message []byte) []byte {
-	var state []byte // the 's'
+	var okayToContinue bool = true
+	var state [blockByteSize][blockByteSize]byte // the 's'
 	var result []byte
 	// var originalKey []byte
 	// var keys []byte
 	var round uint
 
+	if len(message) != int(messageLength) {
+		fmt.Println("Message must be 16 bytes long, no more, no less. ")
+		okayToContinue = false
+	}
+
 	// Want to make sure that this message is 16 bytes long,
 	// else just return the orignal message
-	if len(message) == int(blockByteSize) {
+	if okayToContinue {
 		// Expand
 		// keys = expand(originalKey)
 
 		// S
-		state = message
+		state = array2block(message)
+		fmt.Println(state)
 
 		round = 0
 		for round < maxRounds {
@@ -85,11 +94,9 @@ func AES(message []byte) []byte {
 			round++
 			break
 		}
-	} else {
-		fmt.Println("Message must be 16 bytes long, no more, no less. ")
 	}
 
-	result = state
+	result = block2array(state)
 
 	return result
 }
@@ -102,41 +109,86 @@ func expand(inputString []byte) []byte {
 	return result
 }
 
-func sMap(block []byte) []byte {
-	var result []byte
+func sMap(block [blockByteSize][blockByteSize]byte) [blockByteSize][blockByteSize]byte {
+	var result [blockByteSize][blockByteSize]byte
 	var tempByte byte
 	var xCoor uint
 	var yCoor uint
 
 	xCoor = 0
 	yCoor = 0
-	for index, blockByte := range block {
-		// fmt.Printf("%x: ", blockByte)
+	for rowIndex, row := range block {
+		for columnIndex, blockByte := range row {
+			// fmt.Printf("%x: ", blockByte)
 
-		// Left most 8 bits
-		tempByte = blockByte & 0xF0
-		tempByte = tempByte >> 4
-		// fmt.Printf("%x & ", tempByte)
+			// Left most 8 bits
+			tempByte = blockByte & 0xF0
+			tempByte = tempByte >> 4
+			// fmt.Printf("%x & ", tempByte)
 
-		// Get the x coordinate (the left most)
-		xCoor = uint(tempByte)
+			// Get the x coordinate (the left most)
+			xCoor = uint(tempByte)
 
-		// Right most 8 bits
-		tempByte = blockByte & 0x0F
-		// fmt.Printf("%x", tempByte)
+			// Right most 8 bits
+			tempByte = blockByte & 0x0F
+			// fmt.Printf("%x", tempByte)
 
-		// Get the y coordinate (the right most)
-		yCoor = uint(tempByte)
+			// Get the y coordinate (the right most)
+			yCoor = uint(tempByte)
 
-		tempByte = sBox[int(xCoor)][int(yCoor)]
+			tempByte = sBox[int(xCoor)][int(yCoor)]
 
-		// fmt.Printf(" => %x", tempByte)
-		// fmt.Println()
+			// fmt.Printf(" => %x", tempByte)
+			// fmt.Println()
 
-		block[index] = tempByte
+			block[rowIndex][columnIndex] = tempByte
+		}
 	}
 
 	result = block
+
+	return result
+}
+
+func array2block(array []byte) [blockByteSize][blockByteSize]byte {
+	var result [blockByteSize][blockByteSize]byte
+	var rowIndex uint
+	var columnIndex uint
+
+	rowIndex = 0
+	columnIndex = 0
+	for _, value := range array {
+		result[int(rowIndex)][int(columnIndex)] = value
+
+		// increment column
+		if columnIndex >= (blockByteSize - 1) {
+			columnIndex = 0
+
+			// increment row index
+			if rowIndex >= (blockByteSize - 1) {
+				rowIndex = 0
+			} else {
+				rowIndex++
+			}
+		} else {
+			columnIndex++
+		}
+	}
+
+	return result
+}
+
+func block2array(block [blockByteSize][blockByteSize]byte) []byte {
+	var result []byte
+	var index uint
+
+	index = 0
+	for _, row := range block {
+		for _, cell := range row {
+			result = append(result, cell)
+			index++
+		}
+	}
 
 	return result
 }
