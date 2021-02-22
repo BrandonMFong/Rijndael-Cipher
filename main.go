@@ -59,11 +59,19 @@ func main() {
 	var byteMessage = []byte(message)
 	var key string = "asdfghjkqwertyui"
 	var byteKey = []byte(key)
+	var cipherText string
 
 	fmt.Println("Message:\t", byteMessage)
 	fmt.Println("Key:\t", byteKey)
 
 	byteMessage = AES(byteMessage, byteKey)
+
+	fmt.Println("")
+
+	fmt.Println("Cipher Bytes:", byteMessage)
+
+	cipherText = string(byteMessage)
+	fmt.Println("Cipher Text:", cipherText)
 }
 
 // AES is a function
@@ -98,7 +106,8 @@ func AES(message []byte, key []byte) []byte {
 	if okayToContinue {
 		// Expand
 		keys = expand(originalKey)
-		fmt.Println(keys)
+		fmt.Println("Keys:")
+		printKeys(keys)
 
 		// S
 		state = array2block(message)
@@ -127,7 +136,7 @@ func AES(message []byte, key []byte) []byte {
 			}
 
 			round++
-			break
+			// break
 		}
 	}
 
@@ -178,18 +187,6 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 		// Recall you transposed the blocks
 		// So you are sweeping the columns
 		// Constants are sweeping the rows
-		// Column 0
-		// tempBlockCurr[0] = xorSlices(tempBlockPrev[0], tempSlice, constants[i])
-
-		// // Column 1
-		// tempBlockCurr[1] = xorSlices(tempBlockPrev[1], tempBlockCurr[0], defaultSlice)
-
-		// // Column 2
-		// tempBlockCurr[2] = xorSlices(tempBlockPrev[2], tempBlockCurr[1], defaultSlice)
-
-		// // Column 3
-		// tempBlockCurr[3] = xorSlices(tempBlockPrev[3], tempBlockCurr[2], defaultSlice)
-
 		for j := 0; j < int(blockByteSize); j++ {
 			x = tempBlockPrev[j]
 			if j > 1 {
@@ -374,6 +371,12 @@ func shiftBlock(typeShift uint, block *[blockByteSize][blockByteSize]byte) {
 
 func printBlock(block [blockByteSize][blockByteSize]byte) {
 	for _, row := range block {
+		fmt.Println(row)
+	}
+}
+
+func printKeys(keys [keyArraySize][keyLength]byte) {
+	for _, row := range keys {
 		fmt.Println(row)
 	}
 }
