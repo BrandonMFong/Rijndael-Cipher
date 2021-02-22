@@ -88,8 +88,7 @@ func AES(message []byte) []byte {
 			fmt.Println("S map round", round, ":\t", state)
 
 			// Shift rows
-			transpose(&state)
-			fmt.Println("Transpose: ", state)
+			shiftRows(&state)
 
 			// mix columns
 
@@ -199,4 +198,21 @@ func transpose(block *[blockByteSize][blockByteSize]byte) {
 		}
 	}
 	*block = tempBlock
+}
+
+func shiftRows(block *[blockByteSize][blockByteSize]byte) {
+	// var tempRow [blockByteSize]byte
+	transpose(block)
+
+	for index, row := range *block {
+		if index != 0 {
+			// tempRow = row
+			block[index][0] = row[(0+index)%4]
+			block[index][1] = row[(1+index)%4]
+			block[index][2] = row[(2+index)%4]
+			block[index][3] = row[(3+index)%4]
+		}
+	}
+
+	transpose(block) // reverse the transpose
 }
