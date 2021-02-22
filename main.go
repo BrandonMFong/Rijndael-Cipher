@@ -202,6 +202,11 @@ func expand(inputKey [keyLength]byte) [keyArraySize][keyLength]byte {
 		// tempBlockCurr[2][3] = tempBlockPrev[2][3] ^ tempBlockCurr[2][2]
 		// tempBlockCurr[3][3] = tempBlockPrev[3][3] ^ tempBlockCurr[3][2]
 		tempBlockCurr[3] = xorSlices(tempBlockPrev[3], tempBlockCurr[2], defaultSlice)
+
+		// tempByteBlock = tempBlockCurr[:][:]
+		tempByteArray = block2array(tempBlockCurr)
+		// result[i] = tempByteArray[:int(keyLength)]
+		copy(result[i][:], tempByteArray[:int(keyLength)])
 	}
 
 	return result
