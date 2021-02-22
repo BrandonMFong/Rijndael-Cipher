@@ -42,11 +42,14 @@ var maxRounds uint = 10
 
 func main() {
 	var message string = "BrandonMFongName"
-	byteMessage := []byte(message)
+	var byteMessage = []byte(message)
+	var key string = "asdfghjkqwertyui"
+	var byteKey = []byte(key)
 
 	fmt.Println("Message:\t", byteMessage)
+	fmt.Println("Key:\t", byteKey)
 
-	byteMessage = AES(byteMessage)
+	byteMessage = AES(byteMessage, byteKey)
 }
 
 // func getCsvContent(filename string) [][]string {
@@ -60,7 +63,7 @@ func main() {
 // }
 
 // AES is a function
-func AES(message []byte) []byte {
+func AES(message []byte, key []byte) []byte {
 	var okayToContinue bool = true
 	var state [blockByteSize][blockByteSize]byte // the 's'
 	var result []byte
@@ -70,9 +73,18 @@ func AES(message []byte) []byte {
 
 	fmt.Println("\n** WARNING: The blocks are printed left to right, then top to bottom **\n ")
 
-	if len(message) != int(messageLength) {
-		fmt.Println("Message must be 16 bytes long, no more, no less. ")
-		okayToContinue = false
+	if okayToContinue {
+		if len(message) != int(messageLength) {
+			fmt.Println("Message must be 16 bytes long, no more, no less. ")
+			okayToContinue = false
+		}
+	}
+
+	if okayToContinue {
+		if len(key) != int(messageLength) {
+			fmt.Println("Key must be 16 bytes long, no more, no less. ")
+			okayToContinue = false
+		}
 	}
 
 	// Want to make sure that this message is 16 bytes long,
@@ -85,11 +97,10 @@ func AES(message []byte) []byte {
 		state = array2block(message)
 		fmt.Println("Block:")
 		printBlock(state)
-		fmt.Println()
 
 		round = 0
 		for round < maxRounds {
-			fmt.Println("ROUND", round)
+			fmt.Println("\nROUND", round)
 			// S Map
 			sMap(&state)
 			// fmt.Println("S map:", state)
@@ -109,10 +120,11 @@ func AES(message []byte) []byte {
 			printBlock(state)
 
 			round++
-			break
+			// break
 		}
 	}
 
+	// Revert the block back into an array
 	result = block2array(state)
 
 	return result
@@ -217,18 +229,6 @@ func transpose(block *[blockByteSize][blockByteSize]byte) {
 }
 
 func shiftRows(block *[blockByteSize][blockByteSize]byte) {
-	// transpose(block)
-
-	// for index, row := range *block {
-	// 	if index != 0 {
-	// 		block[index][0] = row[(0+index)%4]
-	// 		block[index][1] = row[(1+index)%4]
-	// 		block[index][2] = row[(2+index)%4]
-	// 		block[index][3] = row[(3+index)%4]
-	// 	}
-	// }
-
-	// transpose(block) // reverse the transpose
 	shiftBlock(shiftTheRows, block)
 }
 
