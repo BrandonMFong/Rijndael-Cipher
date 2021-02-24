@@ -71,7 +71,9 @@ func main() {
 	fmt.Println("Cipher Bytes:", byteMessage)
 
 	cipherText = string(byteMessage)
-	fmt.Println("Cipher Text:", cipherText)
+	fmt.Println("Raw Cipher Text:", cipherText)
+	fmt.Println("Binary Cipher Text:\n ", stringToBin(cipherText))
+	fmt.Println("Binary Cipher Text:\n ", stringToHex(cipherText))
 }
 
 // AES is a function
@@ -399,4 +401,18 @@ func printKeys(keys [keyArraySize][keyLength]byte) {
 	for _, row := range keys {
 		fmt.Println(row)
 	}
+}
+
+func stringToBin(s string) (binString string) {
+	for _, c := range s {
+		binString = fmt.Sprintf("%s%b", binString, c)
+	}
+	return
+}
+
+func stringToHex(s string) (hexString string) {
+	for _, c := range s {
+		hexString = fmt.Sprintf("%s%x", hexString, c)
+	}
+	return
 }
