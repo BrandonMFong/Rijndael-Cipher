@@ -135,6 +135,9 @@ func AES(message []byte, key []byte) []byte {
 				printBlock(state)
 			}
 
+			// xor state with round key
+			xorBlockAndRoundKey(&state, keys[round])
+
 			round++
 			// break
 		}
@@ -144,6 +147,26 @@ func AES(message []byte, key []byte) []byte {
 	result = block2array(state)
 
 	return result
+}
+
+func xorBlockAndRoundKey(state *[blockByteSize][blockByteSize]byte, key [keyLength]byte) {
+	var tempArray []byte
+	var okayToContinue bool = true
+
+	if len(tempArray) != len(key) {
+		fmt.Println("Cannot xor operands")
+		okayToContinue = false
+	}
+
+	if okayToContinue {
+		tempArray = block2array(*state)
+
+		for i, byteKey := range key {
+			tempArray[i] = tempArray[i] ^ byteKey
+		}
+
+		*state = array2block(tempArray)
+	}
 }
 
 // Keep an eye on your logic
