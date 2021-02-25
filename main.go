@@ -51,6 +51,12 @@ var constants = [constantArraySize][constantLength]byte{
 	{0x36, 0x00, 0x00, 0x00},
 	{0x6C, 0x00, 0x00, 0x00}}
 
+var mixColumnMatrix = [blockByteSize][blockByteSize]byte{
+	{0x02, 0x03, 0x01, 0x01},
+	{0x01, 0x02, 0x03, 0x01},
+	{0x01, 0x02, 0x02, 0x03},
+	{0x03, 0x01, 0x01, 0x02}}
+
 var maxRounds uint = 10
 
 // No constraints on the variables in main
@@ -62,12 +68,15 @@ func main() {
 	var cipherText string
 
 	// Validating
+	// Overriding the values above for validation
 	// Using validation set F.1.1: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf
-	byteKey = []byte{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c}
-	byteMessage = []byte{0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a}
+	byteKey = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
+	byteMessage = []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
 
 	fmt.Println("Message:\t", byteMessage)
+	// fmt.Println("Hex Message:\t", stringToHex(byteMessage))
 	fmt.Println("Key:\t", byteKey)
+	// fmt.Println("Hex Key:\t", stringToHex(byteKey))
 
 	byteMessage = AES(byteMessage, byteKey)
 
@@ -90,6 +99,7 @@ func AES(message []byte, key []byte) []byte {
 	var keys [keyArraySize][keyLength]byte
 	var round uint
 
+	round = 0
 	copy(originalKey[:], key[:int(keyLength)]) // Variable size to fixed size
 
 	fmt.Println("\n** WARNING: The blocks are printed left to right, then top to bottom **\n ")
@@ -111,41 +121,50 @@ func AES(message []byte, key []byte) []byte {
 	// Want to make sure that this message is 16 bytes long,
 	// else just return the orignal message
 	if okayToContinue {
-		// Expand
+		/* Expand */
 		keys = expand(originalKey)
 		fmt.Println("Keys:")
 		printKeys(keys)
 
 		fmt.Println("")
 
-		// S
+		/* S initialization */
+		// converting array to block for calculations below
 		state = array2block(message)
+		xorBlockAndRoundKey(&state, keys[round])
 		fmt.Println("Block:")
 		printBlock(state)
 
-		round = 0
 		for round < maxRounds {
 			fmt.Println("\nROUND", round)
 
-			// S Map
+			/* S Map */
 			sMapForBlock(&state)
-			fmt.Println("S map:")
+			fmt.Print("S map:")
+			printHexState(state)
+			fmt.Println("")
 			printBlock(state)
 
-			// Shift rows
+			/* Shift rows */
 			shiftRows(&state)
-			fmt.Println("Shift rows:")
+			fmt.Print("Shift rows:")
+			printHexState(state)
+			fmt.Println("")
 			printBlock(state)
 
-			// mix columns
+			/* mix columns */
 			if round < (maxRounds - 1) {
 				shiftColumns(&state)
-				fmt.Println("Shift columns:")
+				fmt.Print("Shift columns:")
+				printHexState(state)
+				fmt.Println("")
 				printBlock(state)
 			}
 
-			// xor state with round key
+			/* xor state with round key */
 			xorBlockAndRoundKey(&state, keys[round])
+
+			printHexState(state)
 
 			round++
 			// break
@@ -156,6 +175,13 @@ func AES(message []byte, key []byte) []byte {
 	result = block2array(state)
 
 	return result
+}
+func printHexState(state [blockByteSize][blockByteSize]byte) {
+	for _, row := range state {
+		for _, cell := range row {
+			fmt.Printf("%x ", cell)
+		}
+	}
 }
 
 func xorBlockAndRoundKey(state *[blockByteSize][blockByteSize]byte, key [keyLength]byte) {
@@ -257,6 +283,7 @@ func sMapForSlice(slice *[blockByteSize]byte) {
 	for index, sliceByte := range slice {
 		// fmt.Printf("%x: ", blockByte)
 
+		/* Calculating the x coordinate for sbox */
 		// Left most 8 bits
 		tempByte = sliceByte & 0xF0
 		tempByte = tempByte >> 4
@@ -265,6 +292,7 @@ func sMapForSlice(slice *[blockByteSize]byte) {
 		// Get the x coordinate (the left most)
 		xCoor = uint(tempByte)
 
+		/* Calculating the x coordinate for sbox */
 		// Right most 8 bits
 		tempByte = sliceByte & 0x0F
 		// fmt.Printf("%x", tempByte)
@@ -292,7 +320,7 @@ func sMapForBlock(block *[blockByteSize][blockByteSize]byte) {
 		for columnIndex, blockByte := range row {
 			// fmt.Printf("%x: ", blockByte)
 
-			// Left most 8 bits
+			// Left most 4 bits
 			tempByte = blockByte & 0xF0
 			tempByte = tempByte >> 4
 			// fmt.Printf("%x & ", tempByte)
@@ -300,7 +328,7 @@ func sMapForBlock(block *[blockByteSize][blockByteSize]byte) {
 			// Get the x coordinate (the left most)
 			xCoor = uint(tempByte)
 
-			// Right most 8 bits
+			// Right most 4 bits
 			tempByte = blockByte & 0x0F
 			// fmt.Printf("%x", tempByte)
 
@@ -379,10 +407,20 @@ func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
 	shiftBlock(shiftTheColumns, block)
 }
 
-func shiftBlock(typeShift uint, block *[blockByteSize][blockByteSize]byte) {
-	if typeShift == shiftTheRows {
-		transpose(block)
+func mixColumns(block *[blockByteSize][blockByteSize]byte) {
+	// transpose(block)
+
+	for _, row := range *block {
+
 	}
+
+	// transpose(block)
+}
+
+func shiftBlock(typeShift uint, block *[blockByteSize][blockByteSize]byte) {
+	// if typeShift == shiftTheRows {
+	transpose(block)
+	// }
 
 	for index, row := range *block {
 		if index != 0 {
@@ -394,9 +432,9 @@ func shiftBlock(typeShift uint, block *[blockByteSize][blockByteSize]byte) {
 	}
 
 	// reverse the transpose
-	if typeShift == shiftTheRows {
-		transpose(block)
-	}
+	// if typeShift == shiftTheRows {
+	transpose(block)
+	// }
 }
 
 func printBlock(block [blockByteSize][blockByteSize]byte) {
