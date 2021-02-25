@@ -412,10 +412,14 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	// transpose(block)
 	var index uint
 	var indexTwo uint
-	var indexThree uint
+	// var indexThree uint
 	var size uint
 	var sizeTwo uint
-	var sizeThree uint
+	// var sizeThree uint
+	var a0 byte
+	var a1 byte
+	var a2 byte
+	var a3 byte
 
 	size = blockByteSize
 	index = 0
@@ -425,14 +429,12 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 		indexTwo = 0
 		for indexTwo < sizeTwo {
 
-			sizeThree = blockByteSize
-			indexThree = 0
-			for indexThree < sizeThree {
+			a0 = mixColumnMatrix[indexTwo][0] & block[index][0]
+			a1 = mixColumnMatrix[indexTwo][1] & block[index][1]
+			a3 = mixColumnMatrix[indexTwo][2] & block[index][2]
+			a0 = mixColumnMatrix[indexTwo][3] & block[index][3]
 
-				block[index][indexTwo] = block[index][indexTwo] ^ (mixColumnMatrix[indexTwo][indexThree] & block[index][indexThree])
-
-				indexThree++
-			}
+			block[index][indexTwo] = a0 ^ a1 ^ a2 ^ a3
 
 			indexTwo++
 		}
