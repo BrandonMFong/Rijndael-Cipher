@@ -69,6 +69,7 @@ func main() {
 
 	// Validating
 	// Overriding the values above for validation
+	// another: http://www.herongyang.com/Cryptography/AES-Example-Vector-of-AES-Encryption.html
 	// Using validation set F.1.1: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf
 	byteKey = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
 	byteMessage = []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
@@ -140,31 +141,31 @@ func AES(message []byte, key []byte) []byte {
 
 			/* S Map */
 			sMapForBlock(&state)
-			fmt.Print("S map:")
+			fmt.Print("S map: ")
 			printHexState(state)
 			fmt.Println("")
-			printBlock(state)
 
 			/* Shift rows */
 			shiftRows(&state)
-			fmt.Print("Shift rows:")
+			fmt.Print("Shift rows: ")
 			printHexState(state)
 			fmt.Println("")
-			printBlock(state)
 
 			/* mix columns */
 			if round < (maxRounds - 1) {
-				shiftColumns(&state)
-				fmt.Print("Shift columns:")
+				mixColumns(&state)
+				fmt.Print("Shift columns: ")
 				printHexState(state)
 				fmt.Println("")
-				printBlock(state)
 			}
 
 			/* xor state with round key */
 			xorBlockAndRoundKey(&state, keys[round])
 
+			fmt.Print("Round result: ")
 			printHexState(state)
+
+			fmt.Println("")
 
 			round++
 			// break
@@ -409,9 +410,60 @@ func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
 
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	// transpose(block)
+	var index uint
+	var indexTwo uint
+	var indexThree uint
+	var size uint
+	var sizeTwo uint
+	var sizeThree uint
 
-	for _, row := range *block {
+	size = blockByteSize
+	index = 0
+	for index < size {
 
+		sizeTwo = blockByteSize
+		indexTwo = 0
+		for indexTwo < sizeTwo {
+
+			sizeThree = blockByteSize
+			indexThree = 0
+			for indexThree < sizeThree {
+
+				block[index][indexTwo] = block[index][indexTwo] ^
+					(mixColumnMatrix[indexTwo][indexThree] & block[index][indexThree])
+
+				indexThree++
+			}
+
+			// block[index][indexTwo] = (mixColumnMatrix[indexTwo][0] & block[index][0]) ^
+			// 	(mixColumnMatrix[indexTwo][1] & block[index][1]) ^
+			// 	(mixColumnMatrix[indexTwo][2] & block[index][2]) ^
+			// 	(mixColumnMatrix[indexTwo][3] & block[index][3])
+
+			indexTwo++
+		}
+
+		// block[index][0] = (mixColumnMatrix[0][0] & block[index][0]) ^
+		// 	(mixColumnMatrix[0][1] & block[index][1]) ^
+		// 	(mixColumnMatrix[0][2] & block[index][2]) ^
+		// 	(mixColumnMatrix[0][3] & block[index][3])
+
+		// block[index][1] = (mixColumnMatrix[1][0] & block[index][0]) ^
+		// 	(mixColumnMatrix[1][1] & block[index][1]) ^
+		// 	(mixColumnMatrix[1][2] & block[index][2]) ^
+		// 	(mixColumnMatrix[1][3] & block[index][3])
+
+		// block[index][2] = (mixColumnMatrix[2][0] & block[index][0]) ^
+		// 	(mixColumnMatrix[2][1] & block[index][1]) ^
+		// 	(mixColumnMatrix[2][2] & block[index][2]) ^
+		// 	(mixColumnMatrix[2][3] & block[index][3])
+
+		// block[index][3] = (mixColumnMatrix[3][0] & block[index][0]) ^
+		// 	(mixColumnMatrix[3][1] & block[index][1]) ^
+		// 	(mixColumnMatrix[3][2] & block[index][2]) ^
+		// 	(mixColumnMatrix[3][3] & block[index][3])
+
+		index++
 	}
 
 	// transpose(block)
