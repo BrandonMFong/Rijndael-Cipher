@@ -61,6 +61,11 @@ func main() {
 	var byteKey = []byte(key)
 	var cipherText string
 
+	// Validating
+	// Using validation set F.1.1: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf
+	byteKey = []byte{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c}
+	byteMessage = []byte{0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a}
+
 	fmt.Println("Message:\t", byteMessage)
 	fmt.Println("Key:\t", byteKey)
 
@@ -68,12 +73,12 @@ func main() {
 
 	fmt.Println("")
 
-	fmt.Println("Cipher Bytes:", byteMessage)
-
 	cipherText = string(byteMessage)
-	fmt.Println("Raw Cipher Text:", cipherText)
-	fmt.Println("Binary Cipher Text:\n ", stringToBin(cipherText))
-	fmt.Println("Binary Cipher Text:\n ", stringToHex(cipherText))
+	fmt.Println("RESULTS:")
+	fmt.Println("\tCipher Bytes:\t\t", byteMessage)
+	fmt.Println("\tRaw Cipher Text:\t", cipherText)
+	fmt.Println("\tBinary Cipher Text:\t", stringToBin(cipherText))
+	fmt.Println("\tHex Cipher Text:\t", stringToHex(cipherText))
 }
 
 // AES is a function
@@ -110,6 +115,8 @@ func AES(message []byte, key []byte) []byte {
 		keys = expand(originalKey)
 		fmt.Println("Keys:")
 		printKeys(keys)
+
+		fmt.Println("")
 
 		// S
 		state = array2block(message)
@@ -155,13 +162,14 @@ func xorBlockAndRoundKey(state *[blockByteSize][blockByteSize]byte, key [keyLeng
 	var tempArray []byte
 	var okayToContinue bool = true
 
+	tempArray = block2array(*state)
+
 	if len(tempArray) != len(key) {
 		fmt.Println("Cannot xor operands")
 		okayToContinue = false
 	}
 
 	if okayToContinue {
-		tempArray = block2array(*state)
 
 		for i, byteKey := range key {
 			tempArray[i] = tempArray[i] ^ byteKey
