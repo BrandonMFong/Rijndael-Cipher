@@ -429,39 +429,13 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 			indexThree = 0
 			for indexThree < sizeThree {
 
-				block[index][indexTwo] = block[index][indexTwo] ^
-					(mixColumnMatrix[indexTwo][indexThree] & block[index][indexThree])
+				block[index][indexTwo] = block[index][indexTwo] ^ (mixColumnMatrix[indexTwo][indexThree] & block[index][indexThree])
 
 				indexThree++
 			}
 
-			// block[index][indexTwo] = (mixColumnMatrix[indexTwo][0] & block[index][0]) ^
-			// 	(mixColumnMatrix[indexTwo][1] & block[index][1]) ^
-			// 	(mixColumnMatrix[indexTwo][2] & block[index][2]) ^
-			// 	(mixColumnMatrix[indexTwo][3] & block[index][3])
-
 			indexTwo++
 		}
-
-		// block[index][0] = (mixColumnMatrix[0][0] & block[index][0]) ^
-		// 	(mixColumnMatrix[0][1] & block[index][1]) ^
-		// 	(mixColumnMatrix[0][2] & block[index][2]) ^
-		// 	(mixColumnMatrix[0][3] & block[index][3])
-
-		// block[index][1] = (mixColumnMatrix[1][0] & block[index][0]) ^
-		// 	(mixColumnMatrix[1][1] & block[index][1]) ^
-		// 	(mixColumnMatrix[1][2] & block[index][2]) ^
-		// 	(mixColumnMatrix[1][3] & block[index][3])
-
-		// block[index][2] = (mixColumnMatrix[2][0] & block[index][0]) ^
-		// 	(mixColumnMatrix[2][1] & block[index][1]) ^
-		// 	(mixColumnMatrix[2][2] & block[index][2]) ^
-		// 	(mixColumnMatrix[2][3] & block[index][3])
-
-		// block[index][3] = (mixColumnMatrix[3][0] & block[index][0]) ^
-		// 	(mixColumnMatrix[3][1] & block[index][1]) ^
-		// 	(mixColumnMatrix[3][2] & block[index][2]) ^
-		// 	(mixColumnMatrix[3][3] & block[index][3])
 
 		index++
 	}
