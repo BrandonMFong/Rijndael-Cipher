@@ -417,6 +417,8 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	var a1 byte
 	var a2 byte
 	var a3 byte
+	var x byte
+	var y byte
 
 	size = blockByteSize
 	index = 0
@@ -427,10 +429,21 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 		for indexTwo < sizeTwo {
 
 			// This is what it should do: https://www.doc.ic.ac.uk/~mrh/330tutor/ch04s04.html#:~:text=Multiplication%20of%20binary%20polynomials%20can,1%20after%20reduction%20modulo%202.
-			a0 = mixColumnMatrix[indexTwo][0] & block[index][0]
-			a1 = mixColumnMatrix[indexTwo][1] & block[index][1]
-			a3 = mixColumnMatrix[indexTwo][2] & block[index][2]
-			a0 = mixColumnMatrix[indexTwo][3] & block[index][3]
+			x = mixColumnMatrix[indexTwo][0]
+			y = block[index][0]
+			a0 = y << x
+
+			x = mixColumnMatrix[indexTwo][1]
+			y = block[index][1]
+			a1 = y << x
+
+			x = mixColumnMatrix[indexTwo][2]
+			y = block[index][2]
+			a3 = y << x
+
+			x = mixColumnMatrix[indexTwo][3]
+			y = block[index][3]
+			a0 = y << x
 
 			block[index][indexTwo] = a0 ^ a1 ^ a2 ^ a3
 
