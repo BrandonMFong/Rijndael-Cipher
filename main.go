@@ -54,7 +54,7 @@ var constants = [constantArraySize][constantLength]byte{
 var mixColumnMatrix = [blockByteSize][blockByteSize]byte{
 	{0x02, 0x03, 0x01, 0x01},
 	{0x01, 0x02, 0x03, 0x01},
-	{0x01, 0x02, 0x02, 0x03},
+	{0x01, 0x01, 0x02, 0x03},
 	{0x03, 0x01, 0x01, 0x02}}
 
 var maxRounds uint = 10
@@ -409,13 +409,10 @@ func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
 }
 
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
-	// transpose(block)
 	var index uint
 	var indexTwo uint
-	// var indexThree uint
 	var size uint
 	var sizeTwo uint
-	// var sizeThree uint
 	var a0 byte
 	var a1 byte
 	var a2 byte
@@ -429,6 +426,7 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 		indexTwo = 0
 		for indexTwo < sizeTwo {
 
+			// This is what it should do: https://www.doc.ic.ac.uk/~mrh/330tutor/ch04s04.html#:~:text=Multiplication%20of%20binary%20polynomials%20can,1%20after%20reduction%20modulo%202.
 			a0 = mixColumnMatrix[indexTwo][0] & block[index][0]
 			a1 = mixColumnMatrix[indexTwo][1] & block[index][1]
 			a3 = mixColumnMatrix[indexTwo][2] & block[index][2]
