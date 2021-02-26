@@ -408,6 +408,7 @@ func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
 	shiftBlock(shiftTheColumns, block)
 }
 
+// http://gauss.ececs.uc.edu/Courses/c653/extra/AES/mixcolumns.cpp
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	var index uint
 	var indexTwo uint
@@ -431,19 +432,19 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 			// This is what it should do: https://www.doc.ic.ac.uk/~mrh/330tutor/ch04s04.html#:~:text=Multiplication%20of%20binary%20polynomials%20can,1%20after%20reduction%20modulo%202.
 			x = mixColumnMatrix[indexTwo][0]
 			y = block[index][0]
-			a0 = y << x
+			a0 = y * x
 
 			x = mixColumnMatrix[indexTwo][1]
 			y = block[index][1]
-			a1 = y << x
+			a1 = y * x
 
 			x = mixColumnMatrix[indexTwo][2]
 			y = block[index][2]
-			a3 = y << x
+			a3 = y * x
 
 			x = mixColumnMatrix[indexTwo][3]
 			y = block[index][3]
-			a0 = y << x
+			a0 = y * x
 
 			block[index][indexTwo] = a0 ^ a1 ^ a2 ^ a3
 
