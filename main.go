@@ -429,12 +429,10 @@ func galios(b byte, a byte) byte {
 
 // http://gauss.ececs.uc.edu/Courses/c653/extra/AES/mixcolumns.cpp
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
-	var index uint
 	var size uint
 
 	size = blockByteSize
-	index = 0
-	for index < size {
+	for index := 0; index < int(size); index++ {
 
 		// https://en.wikipedia.org/wiki/Rijndael_MixColumns
 		block[index][0] = galios(block[index][0], mixColumnMatrix[0][0]) ^
@@ -456,8 +454,6 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 			mixColumnMatrix[3][1] ^
 			mixColumnMatrix[3][2] ^
 			galios(block[index][3], mixColumnMatrix[3][3])
-
-		index++
 	}
 
 	// transpose(block)
