@@ -430,8 +430,7 @@ func galios(b byte, m byte) (result byte) {
 			} else {
 				temp = (b << 1) ^ 0x1b
 			}
-			b = temp & b
-			result = b
+			result = temp & b
 		}
 	}
 
