@@ -408,48 +408,54 @@ func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
 	shiftBlock(shiftTheColumns, block)
 }
 
+func galios(b byte, a byte) byte {
+	var p byte = 0
+
+	for counter := 0; counter < 8; counter++ {
+		if (b & 1) != 0 {
+			p ^= a
+		}
+
+		var hiBit bool = (a & 0x80) != 0
+		a <<= 1
+		if hiBit {
+			a ^= 0x1B /* x^8 + x^4 + x^3 + x + 1 */
+		}
+		b >>= 1
+	}
+
+	return p
+}
+
 // http://gauss.ececs.uc.edu/Courses/c653/extra/AES/mixcolumns.cpp
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	var index uint
-	var indexTwo uint
 	var size uint
-	var sizeTwo uint
-	var a0 byte
-	var a1 byte
-	var a2 byte
-	var a3 byte
-	var x byte
-	var y byte
 
 	size = blockByteSize
 	index = 0
 	for index < size {
 
-		sizeTwo = blockByteSize
-		indexTwo = 0
-		for indexTwo < sizeTwo {
+		// https://en.wikipedia.org/wiki/Rijndael_MixColumns
+		block[index][0] = galios(block[index][0], mixColumnMatrix[0][0]) ^
+			galios(block[index][1], mixColumnMatrix[0][1]) ^
+			mixColumnMatrix[0][2] ^
+			mixColumnMatrix[0][3]
 
-			// This is what it should do: https://www.doc.ic.ac.uk/~mrh/330tutor/ch04s04.html#:~:text=Multiplication%20of%20binary%20polynomials%20can,1%20after%20reduction%20modulo%202.
-			x = mixColumnMatrix[indexTwo][0]
-			y = block[index][0]
-			a0 = y * x
+		block[index][1] = mixColumnMatrix[1][0] ^
+			galios(block[index][1], mixColumnMatrix[1][1]) ^
+			galios(block[index][2], mixColumnMatrix[1][2]) ^
+			mixColumnMatrix[1][3]
 
-			x = mixColumnMatrix[indexTwo][1]
-			y = block[index][1]
-			a1 = y * x
+		block[index][2] = mixColumnMatrix[2][0] ^
+			mixColumnMatrix[2][1] ^
+			galios(block[index][2], mixColumnMatrix[2][2]) ^
+			galios(block[index][3], mixColumnMatrix[2][3])
 
-			x = mixColumnMatrix[indexTwo][2]
-			y = block[index][2]
-			a3 = y * x
-
-			x = mixColumnMatrix[indexTwo][3]
-			y = block[index][3]
-			a0 = y * x
-
-			block[index][indexTwo] = a0 ^ a1 ^ a2 ^ a3
-
-			indexTwo++
-		}
+		block[index][3] = galios(block[index][0], mixColumnMatrix[3][0]) ^
+			mixColumnMatrix[3][1] ^
+			mixColumnMatrix[3][2] ^
+			galios(block[index][3], mixColumnMatrix[3][3])
 
 		index++
 	}
