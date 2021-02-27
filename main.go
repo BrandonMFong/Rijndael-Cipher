@@ -408,26 +408,33 @@ func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
 	shiftBlock(shiftTheColumns, block)
 }
 
-func galios(b byte, a byte) byte {
-	var p byte = 0
+func galios(b byte, m byte) (result byte) {
 
-	for counter := 0; counter < 8; counter++ {
-		if (b & 1) != 0 {
-			p ^= a
+	if result == 0 {
+		if m == 0x02 {
+			// if the first bit is zero
+			if (0x80 & m) == 0 {
+				b = b << 1
+			} else {
+				b = (b << 1) ^ 0x1b
+			}
+			result = b
 		}
-
-		var hiBit bool = (a & 0x80) != 0
-		a <<= 1
-		if hiBit {
-			a ^= 0x1B /* x^8 + x^4 + x^3 + x + 1 */
-		}
-		b >>= 1
 	}
 
-	return p
+	if result == 0 {
+		if m == 0x03 {
+			b = b << 1
+			b = b ^ 0x1b ^ b
+			result = b
+		}
+	}
+
+	return
 }
 
 // http://gauss.ececs.uc.edu/Courses/c653/extra/AES/mixcolumns.cpp
+// https://en.wikipedia.org/wiki/Rijndael_MixColumns
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	var size uint
 
