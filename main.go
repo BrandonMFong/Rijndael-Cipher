@@ -274,6 +274,30 @@ func xorSlices(x [constantLength]byte, y [constantLength]byte, z [constantLength
 	return result
 }
 
+func getCoordinates(slice byte) (x uint, y uint) {
+	var tempByte byte
+	// fmt.Printf("%x: ", blockByte)
+
+	/* Calculating the x coordinate for sbox */
+	// Left most 8 bits
+	tempByte = slice & 0xF0
+	tempByte = tempByte >> 4
+	// fmt.Printf("%x & ", tempByte)
+
+	// Get the x coordinate (the left most)
+	x = uint(tempByte)
+
+	/* Calculating the x coordinate for sbox */
+	// Right most 8 bits
+	tempByte = slice & 0x0F
+	// fmt.Printf("%x", tempByte)
+
+	// Get the y coordinate (the right most)
+	y = uint(tempByte)
+
+	return
+}
+
 func sMapForSlice(slice *[blockByteSize]byte) {
 	var tempByte byte
 	var xCoor uint
@@ -282,30 +306,8 @@ func sMapForSlice(slice *[blockByteSize]byte) {
 	xCoor = 0
 	yCoor = 0
 	for index, sliceByte := range slice {
-		// fmt.Printf("%x: ", blockByte)
-
-		/* Calculating the x coordinate for sbox */
-		// Left most 8 bits
-		tempByte = sliceByte & 0xF0
-		tempByte = tempByte >> 4
-		// fmt.Printf("%x & ", tempByte)
-
-		// Get the x coordinate (the left most)
-		xCoor = uint(tempByte)
-
-		/* Calculating the x coordinate for sbox */
-		// Right most 8 bits
-		tempByte = sliceByte & 0x0F
-		// fmt.Printf("%x", tempByte)
-
-		// Get the y coordinate (the right most)
-		yCoor = uint(tempByte)
-
+		xCoor, yCoor = getCoordinates(sliceByte)
 		tempByte = sBox[int(xCoor)][int(yCoor)]
-
-		// fmt.Printf(" => %x", tempByte)
-		// fmt.Println()
-
 		slice[index] = tempByte
 	}
 }
@@ -319,28 +321,8 @@ func sMapForBlock(block *[blockByteSize][blockByteSize]byte) {
 	yCoor = 0
 	for rowIndex, row := range block {
 		for columnIndex, blockByte := range row {
-			// fmt.Printf("%x: ", blockByte)
-
-			// Left most 4 bits
-			tempByte = blockByte & 0xF0
-			tempByte = tempByte >> 4
-			// fmt.Printf("%x & ", tempByte)
-
-			// Get the x coordinate (the left most)
-			xCoor = uint(tempByte)
-
-			// Right most 4 bits
-			tempByte = blockByte & 0x0F
-			// fmt.Printf("%x", tempByte)
-
-			// Get the y coordinate (the right most)
-			yCoor = uint(tempByte)
-
+			xCoor, yCoor = getCoordinates(blockByte)
 			tempByte = sBox[int(xCoor)][int(yCoor)]
-
-			// fmt.Printf(" => %x", tempByte)
-			// fmt.Println()
-
 			block[rowIndex][columnIndex] = tempByte
 		}
 	}
@@ -401,11 +383,23 @@ func transpose(block *[blockByteSize][blockByteSize]byte) {
 }
 
 func shiftRows(block *[blockByteSize][blockByteSize]byte) {
-	shiftBlock(shiftTheRows, block)
-}
+	// if typeShift == shiftTheRows {
+	transpose(block)
+	// }
 
-func shiftColumns(block *[blockByteSize][blockByteSize]byte) {
-	shiftBlock(shiftTheColumns, block)
+	for index, row := range *block {
+		if index != 0 {
+			block[index][0] = row[(0+index)%4]
+			block[index][1] = row[(1+index)%4]
+			block[index][2] = row[(2+index)%4]
+			block[index][3] = row[(3+index)%4]
+		}
+	}
+
+	// reverse the transpose
+	// if typeShift == shiftTheRows {
+	transpose(block)
+	// }
 }
 
 func galios(b byte, m byte) (result byte) {
@@ -468,26 +462,6 @@ func mixColumns(block *[blockByteSize][blockByteSize]byte) {
 	}
 
 	// transpose(block)
-}
-
-func shiftBlock(typeShift uint, block *[blockByteSize][blockByteSize]byte) {
-	// if typeShift == shiftTheRows {
-	transpose(block)
-	// }
-
-	for index, row := range *block {
-		if index != 0 {
-			block[index][0] = row[(0+index)%4]
-			block[index][1] = row[(1+index)%4]
-			block[index][2] = row[(2+index)%4]
-			block[index][3] = row[(3+index)%4]
-		}
-	}
-
-	// reverse the transpose
-	// if typeShift == shiftTheRows {
-	transpose(block)
-	// }
 }
 
 func printBlock(block [blockByteSize][blockByteSize]byte) {
