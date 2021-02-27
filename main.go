@@ -413,7 +413,7 @@ func galios(b byte, m byte) (result byte) {
 	if result == 0 {
 		if m == 0x02 {
 			// if the first bit is zero
-			if (0x80 & m) == 0 {
+			if (0x80 & b) == 0 {
 				b = b << 1
 			} else {
 				b = (b << 1) ^ 0x1b
@@ -424,8 +424,13 @@ func galios(b byte, m byte) (result byte) {
 
 	if result == 0 {
 		if m == 0x03 {
-			b = b << 1
-			b = b ^ 0x1b ^ b
+			var temp byte
+			if (0x80 & b) == 0 {
+				temp = b << 1
+			} else {
+				temp = (b << 1) ^ 0x1b
+			}
+			b = temp & b
 			result = b
 		}
 	}
@@ -436,31 +441,31 @@ func galios(b byte, m byte) (result byte) {
 // http://gauss.ececs.uc.edu/Courses/c653/extra/AES/mixcolumns.cpp
 // https://en.wikipedia.org/wiki/Rijndael_MixColumns
 func mixColumns(block *[blockByteSize][blockByteSize]byte) {
-	var size uint
+	// var size uint
 
-	size = blockByteSize
-	for index := 0; index < int(size); index++ {
+	// size = blockByteSize
+	for i, row := range *block {
 
 		// https://en.wikipedia.org/wiki/Rijndael_MixColumns
-		block[index][0] = galios(block[index][0], mixColumnMatrix[0][0]) ^
-			galios(block[index][1], mixColumnMatrix[0][1]) ^
+		block[i][0] = galios(row[0], mixColumnMatrix[0][0]) ^
+			galios(row[1], mixColumnMatrix[0][1]) ^
 			mixColumnMatrix[0][2] ^
 			mixColumnMatrix[0][3]
 
-		block[index][1] = mixColumnMatrix[1][0] ^
-			galios(block[index][1], mixColumnMatrix[1][1]) ^
-			galios(block[index][2], mixColumnMatrix[1][2]) ^
+		block[i][1] = mixColumnMatrix[1][0] ^
+			galios(row[1], mixColumnMatrix[1][1]) ^
+			galios(row[2], mixColumnMatrix[1][2]) ^
 			mixColumnMatrix[1][3]
 
-		block[index][2] = mixColumnMatrix[2][0] ^
+		block[i][2] = mixColumnMatrix[2][0] ^
 			mixColumnMatrix[2][1] ^
-			galios(block[index][2], mixColumnMatrix[2][2]) ^
-			galios(block[index][3], mixColumnMatrix[2][3])
+			galios(row[2], mixColumnMatrix[2][2]) ^
+			galios(row[3], mixColumnMatrix[2][3])
 
-		block[index][3] = galios(block[index][0], mixColumnMatrix[3][0]) ^
+		block[i][3] = galios(row[0], mixColumnMatrix[3][0]) ^
 			mixColumnMatrix[3][1] ^
 			mixColumnMatrix[3][2] ^
-			galios(block[index][3], mixColumnMatrix[3][3])
+			galios(row[3], mixColumnMatrix[3][3])
 	}
 
 	// transpose(block)
